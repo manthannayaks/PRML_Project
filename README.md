@@ -1,121 +1,131 @@
-`Folder structure`:
+# Cross-Domain Image Retrieval and Classification (Office-Home)
 
-|-Dataset/
-|       |-Art
-|       |-Clipart
-|       |-Product
-|       |-Real World
-|-requirements.txt
-|-config.py
-|-dataset.py
-|-inference.py
-|-losses.py
-|-metrics.py
-|-model.py
-|-run_pipeline.bat
-|-test.py
-|-train.py
-|-utils.py
-|-val.py
-|-EDA.py
-|-create_csv.py
-|-plot_config_scores.py
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+A state-of-the-art implementation of **Domain-Adversarial Neural Networks (DANN)** for multi-domain image retrieval and classification using the **Office-Home** dataset. This project leverages **Gradient Reversal Layers (GRL)** and **Triplet-based data sampling** to learn domain-invariant features across four distinct visual domains: Art, Clipart, Product, and Real World.
 
-`requirements`:
- torch
- numpy
- pandas
- matplotlib
- torchvision
- tqdm
- transformers
- scikit-learn
- Pillow
+## 📌 Project Overview
 
+In real-world computer vision, models often perform poorly when the visual style changes (e.g., training on photos but testing on sketches). This project addresses this "Domain Gap" by training a model that recognizes the underlying object (65 classes) while ignoring the domain-specific artistic style.
 
- ` How to run` :
- run `.\run_pipeline.bat` from the project root in a terminal. It will create the virtual environment, install dependencies, run EDA, train all configurations, evaluate the best model on test, build rankings, and generate retrieval samples.
+### Key Objectives:
+- **Domain Generalization:** Learning features that are consistent across different visual domains.
+- **Robust Retrieval:** Building a high-performance cross-domain image retrieval system.
+- **Comparison of Backbones:** Evaluating performance across ResNet-50, VGG-16, and DenseNet-121 architectures.
 
- `Main output folders`:
+---
 
-`outputs/checkpoints/`
-- best checkpoint for each configuration
+## 🚀 Methodology
 
-`outputs/logs/`
-- training history csv
-- per-config loss plot
+### 1. Domain-Adversarial Training (DANN)
+We implement a DANN architecture which consists of:
+- **Feature Extractor:** A CNN backbone (e.g., ResNet50) used to extract high-dimensional features.
+- **Label Classifier:** Predicts the object category (65 classes) using standard Cross-Entropy loss.
+- **Domain Classifier:** An adversarial branch that tries to predict which domain (Art, Clipart, etc.) the image belongs to.
+- **Gradient Reversal Layer (GRL):** During the backward pass, the GRL flips the sign of the gradients from the domain classifier. This forces the feature extractor to learn representations that **actively confuse** the domain classifier, resulting in domain-invariant features.
 
-`outputs/reports/`
-- validation reports
-- test reports
-- best model summary
-- validation ranking csv and validation bar plot
-- test ranking csv for the single best model
+### 2. Triplet-Based Sampling
+The `OfficeHomeTripletDataset` samples triplets consisting of an **Anchor**, a **Positive** (same class, different domain), and a **Negative** (different class). This ensures that each training batch contains cross-domain pairings, encouraging the model to group similar objects together regardless of their source domain.
 
+---
 
-`outputs/embeddings/`
-- saved train, val, and test embeddings
+## 📂 Project Structure
 
-`outputs/samples/`
-- qualitative retrieval examples
+```text
+├── Dataset/                # Raw image data (Art, Clipart, Product, Real World)
+├── outputs/                # Auto-generated reports, plots, and checkpoints
+├── model.py                # DANN Architecture with GRL implementation
+├── train.py                # Multi-experiment training pipeline
+├── config.py               # Global hyperparameters and path configurations
+├── dataset.py              # Triplet sampling and evaluative dataset logic
+├── metrics.py              # retrieval evaluation (mAP, Recall@k, Precision@k)
+├── create_csv.py           # Dataset indexing and split generation
+├── EDA.py                  # Exploratory Data Analysis and distribution plots
+├── inference.py            # Result visualization and qualitative sampling
+└── run_pipeline.bat        # Automated end-to-end execution script
+```
 
-`outputs/eda/`
-- contains all the saved plot of dataset analysis after splitting
+---
 
-`Good_samples/`
--manually picked some good generated samples
+## 🛠️ Installation & Setup
 
-`Bad_samples/`
--manually picked some bad generated samples
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/manthannayaks/PRML_Project.git
+   cd PRML_Project
+   ```
 
-Files and Their Roles:
-`create_csv.py`
-- builds `dataset_index.csv` by scanning the dataset folders and assigning train/val/test splits per class-domain folder
+2. **Environment Setup:**
+   It is recommended to use a virtual environment.
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-`EDA.py`
-- performs exploratory data analysis 
+3. **Requirements:**
+   - `torch`, `torchvision`
+   - `pandas`, `numpy`, `matplotlib`, `scikit-learn`
+   - `tqdm`, `Pillow`, `transformers`
 
-`config.py`
-- stores hyperparameters, paths, model options, augmentation settings, and output locations
+---
 
-`dataset.py`
-- loads split-wise data
-- creates training triplets
-- creates evaluation datasets
+## 🏃 Usage Guide
 
-`model.py`
-- builds pretrained backbones
-- adds the trainable head
-- adds embedding projection
-- adds class classifier
-- adds GRL and domain classifier
+### 1. Data Initialization
+Generate the dataset index and perform EDA:
+```bash
+python create_csv.py
+python EDA.py
+```
 
-`losses.py`
-- defines class cross-entropy loss
-- defines domain cross-entropy loss
+### 2. Automated Pipeline
+Run the full experiment suite (covers all backbones, learning rates, and head depths):
+```bash
+# On Windows
+.\run_pipeline.bat
+```
 
-`train.py`
-- trains each experiment configuration
-- saves history and best checkpoints
-- selects the best model using the score
+### 3. Manual Training
+To train a specific configuration:
+```bash
+python train.py
+```
 
-`val.py`
-- runs retrieval evaluation for a split
-- saves metrics, retrieval outputs, t-SNE, and embeddings
+### 4. Evaluation & Visualization
+After training, generate retrieval samples and t-SNE visualizations:
+```bash
+python inference.py
+```
 
-`test.py`
-- builds test ranking csv across checkpoints
-- evaluates the best validation model on the test split
-- saves test metrics and summary csv files
+---
 
-`metrics.py`
-- generates embeddings
-- computes cosine similarity
-- computes retrieval metrics
+## 📊 Evaluation Metrics
 
-`utils.py`
-- helper utilities for transforms, checkpoints, history plots, and score calculation
+The system evaluates performance using standard retrieval metrics with a focus on **Cross-Domain consistency**:
+- **Accuracy@1:** Top-1 classification accuracy.
+- **mAP (Mean Average Precision):** Evaluated specifically for cross-domain queries.
+- **Recall@k & Precision@k:** Top-k retrieval performance metrics.
+- **Same-Domain Ratio:** Tracks how often the model retrieves images from the same style vs. different styles.
 
-`inference.py`
-- saves qualitative retrieval example images
+---
+
+## 📉 Outputs
+
+All results are saved in the `outputs/` directory:
+- `/checkpoints/`: Best model weights for each configuration.
+- `/logs/`: Training history CSVs and loss curves.
+- `/reports/`: Precision/Recall bars and the final "Best Model" summary.
+- `/samples/`: Visual retrieval results showing Query image vs. Top matches.
+- `/embeddings/`: Saved feature vectors for t-SNE analysis.
+
+---
+
+## 👥 Contributors
+
+- **Manthan Nayak** - [GitHub](https://github.com/manthannayaks)
+
+---
+*Developed as part of the PRML (Pattern Recognition and Machine Learning) Course Project.*
