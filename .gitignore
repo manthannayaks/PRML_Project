@@ -31,7 +31,9 @@ wheels/
 *.egg
 
 # Data & Outputs
-outputs/
+outputs/checkpoints/
+outputs/embeddings/
+*.pth
 *.csv
 !dataset_index.csv
 *.json
