@@ -16,7 +16,7 @@ LOGS_DIR = OUTPUTS_DIR / "logs"
 for folder in [OUTPUTS_DIR, CHECKPOINT_DIR, REPORTS_DIR, EMBEDDINGS_DIR, SAMPLES_DIR, LOGS_DIR]:
     folder.mkdir(parents=True, exist_ok=True)
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 SEED = 42
 
 IMAGE_SIZE = 128
